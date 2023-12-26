@@ -1,6 +1,7 @@
 from uuid import uuid4
 from nordigen import NordigenClient
 
+
 def main():
     # Load token from .env file or pass secrets as a string
     client = NordigenClient(
@@ -15,7 +16,8 @@ def main():
 
     # Exchange refresh token for new access token
     new_token = client.exchange_token(token_data["refresh"])
-
+    if not new_token:
+        exit()
     # Get institution_id by country and institution name
     institution_id = client.institution.get_institution_id_by_name(
         country="LV", institution="Revolut"
@@ -52,8 +54,13 @@ def main():
     balances = account.get_balances()
     details = account.get_details()
     transactions = account.get_transactions()
+
+    print("\n".join([meta_data, balances, details, transactions]))
+
     # Filter transactions by specific date range
     transactions = account.get_transactions(date_from="2021-12-01", date_to="2022-01-21")
+
+    print(transactions)
 
     # Premium
     premium_transactions = account.get_premium_transactions(
@@ -62,6 +69,8 @@ def main():
         date_to="2022-01-21"
     )
     premium_details = account.get_premium_details()
+    print(premium_details, "\n", premium_transactions)
+
 
 if __name__ == "__main__":
     main()

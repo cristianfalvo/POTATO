@@ -1,6 +1,6 @@
 [flake8]
 docstring-convention = all
-max-line-length = 79
+max-line-length = 99
 
 ignore =
     # pydocstyle
