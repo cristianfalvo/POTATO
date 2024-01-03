@@ -10,7 +10,7 @@ app = Flask(__name__)
 # set Flask secret key
 app.config["SECRET_KEY"] = os.urandom(24)
 
-COUNTRY = "LV"
+COUNTRY = "IT"
 REDIRECT_URI = "http://127.0.0.1:5000/results"
 
 # Load secrets from .env file
@@ -28,11 +28,23 @@ client.generate_token()
 
 
 @app.route("/", methods=["GET"])
-def home():
+def institutions():
     # Get list of institutions
     institution_list = client.institution.get_institutions(country=COUNTRY)
     return render_template("index.html", institutions=institution_list)
 
+
+@app.route("/home", methods=["GET"])
+def home():
+    reqs = client.requisition.get_requisitions()["results"]
+    print(reqs)
+    for req in reqs:
+        print("\n\n")
+        account_id = req["accounts"]
+        print(account_id)
+        account = client.account_api(req["accounts"][0])
+        balances = account.get_balances()
+    return render_template("home.html", balances=balances)
 
 @app.route("/agreements/<institution_id>", methods=["GET"])
 def agreements(institution_id):
