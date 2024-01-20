@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Transactions</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/picnic">
+  </head>
+  <body>
+    <div id="transactions">
+      <div id="transactions-header">
+        <header class="card">
+          <h2>Transactions for account {{name}}:</h2>
+        </header>
+      </div>
+      <div id="booked-transactions">
+        <div id="booked-transactions-header">
+            <h2>Booked transactions:</h2>
+        </div>
+        <table>
+            <tr>
+            {% for header in booked_headers: %}
+            <th>{{ header }}</th>
+            {% endfor %}
+            </tr>
+        {% for transaction in booked: %}
+        <tr>
+            {% for header in booked_headers: %}
+            <td>{{ "" if header not in transaction else transaction[header] }}</td>
+            {% endfor %}
+        </tr>
+        {% endfor %}
+        </table>
+      </div>
+      <div id="pending-transactions">
+        <div id="pending-transactions-header">
+            <h2>Pending transactions:</h2>
+        </div>
+        <table>
+            <tr>
+            {% for header in pending_headers: %}
+            <th>{{ header }}</th>
+            {% endfor %}
+            </tr>
+        {% for transaction in pending: %}
+        <tr>
+            {% for header in pending_headers: %}
+            <td>{{ "" if header not in transaction else transaction[header] }}</td>
+            {% endfor %}
+        </tr>
+        {% endfor %}
+        </table>
+      </div>
+    </div>
+
+  </body>
+</html>

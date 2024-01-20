@@ -1,12 +1,14 @@
 import os
 from uuid import uuid4
-
+from decimal import Decimal
 from functools import reduce
+from typing import List
 
 from dotenv import load_dotenv
-from flask import Flask, jsonify, redirect, render_template, session, url_for, request, abort
+from flask import Flask, jsonify, redirect, render_template, session, url_for, request, abort   
 
 from nordigen import NordigenClient
+from nordigen.types import *
 from datetime import date
 
 from requests import HTTPError
@@ -41,7 +43,7 @@ def institutions():
 
 @app.route("/home", methods=["GET"])
 def home():
-    reqs = client.requisition.get_requisitions()["results"]
+    reqs= client.requisition.get_requisitions()["results"]
     print(reqs)
     account_ids = []
     account_refs = {}
@@ -50,13 +52,64 @@ def home():
     print("\n\n")
     print(account_ids)
     balances = {}
+    total_balances = {}
     for acc in account_ids:
         account = client.account_api(acc)
-        balances[acc] = account.get_balances()
-        details = account.get_details()["account"]
+        balances[acc] = account.get_balances()["balances"]
+        
+        # take the account balance that's most relevant
+        # no balance available, so skip
+        
+        if len(balances[acc])==0:
+            continue
+        
+        # only one balance, use it
+        
+        elif len(balances[acc])==1:
+            cur_balance = balances[acc][0]["balanceAmount"]
+        
+        # multple balances exist; 
+        # use ones marked with "available" and take the ***LOWEST***
+        # if none match "available" still take the lowest overall
+        # TODO: comparison of amounts should keep currency into account
+        # however chances of one account having balances in multiple currencies is low
+        
+        else:
+            cur_balance = None
+            available = False
+            for balance in balances[acc]:
+                if not available:
+                    if "available" in balance["balanceType"].lower():
+                        available = True
+                        cur_balance = balance
+                    elif (
+                        not cur_balance
+                        or Decimal(balance["balanceAmount"]["amount"])
+                        <
+                        Decimal(cur_balance["balanceAmount"]["amount"])
+                    ):
+                        cur_balance = balance
+                else:
+                    if (
+                        Decimal(balance["balanceAmount"]["amount"])
+                        <
+                        Decimal(cur_balance["balanceAmount"]["amount"])
+                    ):
+                        cur_balance = balance
+        
+        cur_balance = cur_balance["balanceAmount"]
+        amount = Decimal(cur_balance["amount"])
+        cur = cur_balance["currency"]
+        details:  = account.get_details()["account"]
         print(details)
-        account_refs[acc] = details["name"]
-    return render_template("home.html", balances=balances, accounts=account_refs)
+        account_refs[acc] = details.get("name")
+        total_balances[cur] = (
+            amount
+            if cur not in total_balances
+            else total_balances[cur]+amount
+        )
+    
+    return render_template("home.html", balances=total_balances, accounts=account_refs)
 
 
 @app.route("/transactions/<account_id>", methods=["GET"])
